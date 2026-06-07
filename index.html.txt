@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ครูออมสินชวนคิด: อวตารพีทาโกรัส </title>
+    <!-- นำเข้า Google Font & Tailwind CSS เพื่อความสวยงาม -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+        .title-font {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+        /* ตกแต่ง Slider ให้ดูโมเดิร์นขึ้น */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -8px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+            transition: transform 0.1s, background-color 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.25);
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 text-slate-800">
+
+    <!-- ส่วนหัว (Header) -->
+    <header class="w-full max-w-4xl text-center mb-4">
+        <h1 class="title-font text-3xl md:text-4xl font-bold text-blue-600 flex items-center justify-center gap-2">
+            📐 อวตารพีทาโกรัส V4.1 <span class="text-sm bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">ครูออมสินชวนคิด</span>
+        </h1>
+        <p class="text-slate-500 mt-2 text-sm md:text-base">
+            เปรียบเทียบการขยายร่างของสามเหลี่ยมกับ "ร่างต้น (x1)" ให้เห็นความเติบโตทางสายตาอย่างแท้จริง!
+        </p>
+    </header>
+
+    <!-- กล่องเครื่องมือและแคนวาสแบบ Grid Grid-cols -->
+    <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- แผงควบคุม (Control Panel) -->
+        <section class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex flex-col justify-between gap-6">
+            <div class="space-y-5">
+                <h2 class="text-lg font-bold text-slate-700 border-b pb-2 flex items-center gap-2">
+                    ⚙️ ตั้งค่าและขยายร่าง
+                </h2>
+                
+                <!-- เลือกชุดตัวเลขหลัก -->
+                <div class="flex flex-col gap-2">
+                    <label for="triple-select" class="text-sm font-semibold text-slate-600">เลือกอัตราส่วนต้นแบบ (a : b : c):</label>
+                    <select id="triple-select" onchange="updateTriple()" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        <option value="3,4,5" selected>ชุด 3 : 4 : 5 (ร่างต้นยอดนิยม)</option>
+                        <option value="5,12,13">ชุด 5 : 12 : 13</option>
+                        <option value="8,15,17">ชุด 8 : 15 : 17</option>
+                        <option value="7,24,25">ชุด 7 : 24 : 25</option>
+                    </select>
+                </div>
+
+                <!-- แถบตัวคูณร่างอวตาร -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-slate-600">สไลเดอร์ขยายร่างยักษ์:</label>
+                        <span id="multiplier-val" class="text-xl font-black text-blue-600 bg-blue-50 px-3 py-1 rounded border border-blue-200 title-font">x1</span>
+                    </div>
+                    <input type="range" id="multiplier-slider" min="1" max="5" value="1" step="1" oninput="onSliderChange()" class="w-full my-2">
+                    <div class="flex justify-between text-xs text-slate-400 px-1 font-bold">
+                        <span>x1 (ร่างเล็กสุด)</span>
+                        <span>x2</span>
+                        <span>x3</span>
+                        <span>x4</span>
+                        <span>x5 (ร่างยักษ์ใหญ่)</span>
+                    </div>
+                </div>
+
+                <!-- แสดงผลลัพธ์คณิตศาสตร์ -->
+                <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 space-y-3">
+                    <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider">สมการและการวิเคราะห์</h3>
+                    <div class="space-y-1 text-sm">
+                        <p class="text-slate-600">สัดส่วนต้นแบบ: <span id="formula-base" class="font-semibold text-slate-800">3² + 4² = 5²</span></p>
+                        <p class="text-slate-600">ร่างอวตารปัจจุบัน:</p>
+                        <p class="text-xl font-bold text-indigo-600 title-font" id="formula-avatar">3² + 4² = 5²</p>
+                        <p class="text-xs text-indigo-500 font-mono" id="formula-calc">(9 + 16 = 25)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- สวิตช์ตั้งค่าเพิ่มเติม -->
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-slate-600">แสดงพื้นที่สี่เหลี่ยมรอบข้าง:</span>
+                    <button id="toggle-squares" onclick="toggleSquares()" class="w-12 h-6 rounded-full bg-blue-600 p-1 transition-colors duration-200 focus:outline-none">
+                        <div id="toggle-knob" class="w-4 h-4 rounded-full bg-white transition-transform duration-200 translate-x-6"></div>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400">
+                    *ดูการเติบโตของพื้นที่สี่เหลี่ยมจัตุรัสตามอัตราส่วนการขยายร่าง
+                </p>
+            </div>
+        </section>
+
+        <!-- พื้นที่แสดงผลกราฟิก (Canvas) -->
+        <section class="lg:col-span-8 flex flex-col gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex flex-col items-center justify-center">
+                <div id="canvas-container" class="w-full flex justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                    <!-- p5.js Canvas จะมาอยู่ตรงนี้ -->
+                </div>
+            </div>
+            
+            <!-- คำแนะนำเกร็ดความรู้เล็กๆ -->
+            <div class="bg-amber-50 border border-amber-100 p-4 rounded-xl text-xs md:text-sm text-amber-800 flex items-center gap-2">
+                <span>💡</span>
+                <span><strong>สังเกตจุดเปรียบเทียบ:</strong> รูปเงาสามเหลี่ยมสีเทาเข้มด้านหลังคือ <strong>"ร่างต้น (x1)"</strong> นักเรียนสามารถสังเกตขนาดที่เติบโตทับขึ้นมาอย่างเห็นภาพจริงว่าร่างอวตารขยายใหญ่โตขึ้นมากแค่ไหน!</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ส่วนท้าย (Footer) -->
+    <footer class="w-full text-center py-6 text-xs text-slate-400 border-t mt-8">
+        &copy; 2026 ครูออมสินชวนคิด - สื่อการสอนคณิตศาสตร์ยุคใหม่แบบโต้ตอบได้
+    </footer>
+
+    <!-- โค้ด p5.js สำหรับควบคุมการวาดภาพจำลอง -->
+    <script>
+        let baseA = 3; 
+        let baseB = 4; 
+        let baseC = 5; 
+        
+        let targetMultiplier = 1; // ตัวคูณเป้าหมาย
+        let currentMultiplier = 1; // ตัวคูณแบบไหลนุ่มนวล (สำหรับสร้างอนิมชัน)
+        
+        let unitPixel = 20; // สเกลพิกเซลต่อหน่วย
+        let showSquares = true; // เปิดปิดการจำลองสี่เหลี่ยม
+        let effectPulse = 0; // ค่าแสงออร่าเวลาเปลี่ยนขนาด
+
+        // โหลดข้อมูลองค์ประกอบ UI
+        const selectBox = document.getElementById("triple-select");
+        const slider = document.getElementById("multiplier-slider");
+        const multValText = document.getElementById("multiplier-val");
+        
+        const formulaBaseText = document.getElementById("formula-base");
+        const formulaAvatarText = document.getElementById("formula-avatar");
+        const formulaCalcText = document.getElementById("formula-calc");
+
+        function setup() {
+            let containerWidth = document.getElementById('canvas-container').offsetWidth;
+            let w = Math.max(280, Math.min(containerWidth, 680));
+            let h = 480;
+            
+            let canvas = createCanvas(w, h);
+            canvas.parent('canvas-container');
+            
+            updateTriple(); // คำนวณสถานะเริ่มต้น
+        }
+
+        // หากผู้ใช้ย่อขยายขนาดหน้าจอเบราว์เซอร์
+        function windowResized() {
+            let containerWidth = document.getElementById('canvas-container').offsetWidth;
+            let w = Math.max(280, Math.min(containerWidth, 680));
+            resizeCanvas(w, 480);
+        }
+
+        // เมื่อมีการเปลี่ยนตัวเลขใน Dropdown
+        function updateTriple() {
+            let selectedValue = selectBox.value;
+            let parts = selectedValue.split(",");
+            
+            baseA = parseInt(parts[0]);
+            baseB = parseInt(parts[1]);
+            baseC = parseInt(parts[2]);
+            
+            effectPulse = 255; // จุดชนวนให้เกิดวงแสงแผ่กระจายออกมา (Flash Effect)
+            updateUIInfo();
+        }
+
+        // เมื่อลากสไลเดอร์ตัวคูณ
+        function onSliderChange() {
+            targetMultiplier = parseInt(slider.value);
+            multValText.innerText = "x" + targetMultiplier;
+            effectPulse = 180; // ปลุกวงแสงออร่าแผ่กว้างเมื่อปรับสเกล
+            updateUIInfo();
+        }
+
+        // สลับโหมดการแสดงพื้นที่สี่เหลี่ยม
+        function toggleSquares() {
+            showSquares = !showSquares;
+            const toggleKnob = document.getElementById("toggle-knob");
+            const toggleBg = document.getElementById("toggle-squares");
+            
+            if (showSquares) {
+                toggleKnob.classList.remove("translate-x-0");
+                toggleKnob.classList.add("translate-x-6");
+                toggleBg.classList.remove("bg-slate-300");
+                toggleBg.classList.add("bg-blue-600");
+            } else {
+                toggleKnob.classList.remove("translate-x-6");
+                toggleKnob.classList.add("translate-x-0");
+                toggleBg.classList.remove("bg-blue-600");
+                toggleBg.classList.add("bg-slate-300");
+            }
+        }
+
+        // อัปเดตตัวหนังสือคณิตศาสตร์ในส่วนแผงควบคุม
+        function updateUIInfo() {
+            let displayMult = targetMultiplier;
+            let currentA = baseA * displayMult;
+            let currentB = baseB * displayMult;
+            let currentC = baseC * displayMult;
+
+            formulaBaseText.innerHTML = `${baseA}² + ${baseB}² = ${baseC}² <span class="text-xs text-slate-400">(${baseA*baseA} + ${baseB*baseB} = ${baseC*baseC})</span>`;
+            formulaAvatarText.innerText = `${currentA}² + ${currentB}² = ${currentC}²`;
+            formulaCalcText.innerText = `(${currentA*currentA} + ${currentB*currentB} = ${currentC*currentC})`;
+        }
+
+        // ฟังก์ชันช่วยคำนวณด้านเอียง
+        function drawC_calc(a, b) {
+            return Math.sqrt(a * a + b * b);
+        }
+
+        // ฟังก์ชันวาดสติกเกอร์ Badge
+        function drawTextBadge(txt, x, y, textColor, bgColor, borderColor) {
+            push();
+            rectMode(CENTER);
+            textAlign(CENTER, CENTER);
+            textSize(12);
+            textStyle(BOLD);
+            
+            let tw = textWidth(txt) + 14;
+            let th = 24;
+            
+            // เงาเบาบาง
+            noStroke();
+            fill(0, 10);
+            rect(x, y + 2, tw, th, 6);
+            
+            // ตัวกล่อง
+            fill(bgColor);
+            stroke(borderColor);
+            strokeWeight(1.5);
+            rect(x, y, tw, th, 6);
+            
+            // ข้อความตัวเลข
+            noStroke();
+            fill(textColor);
+            text(txt, x, y + 1);
+            pop();
+        }
+
+        function draw() {
+            background(250, 252, 254);
+            
+            // --- อนิเมชันการเคลื่อนที่ขยายขนาดแบบสมูท (Lerp) ---
+            currentMultiplier = lerp(currentMultiplier, targetMultiplier, 0.15);
+            
+            // เคลื่อนอนิเมชันของเอฟเฟกต์วงแสงให้ค่อยๆ จางหายไป
+            if (effectPulse > 0) {
+                effectPulse -= 10;
+            }
+
+            // 1. กำหนดขอบเขตปลอดภัยรอบแคนวาส (Safety Edge Padding) เพื่อป้องกันตัวอักษรหลุดเฟรม
+            let paddingX = 75; // เผื่อระยะป้ายทางซ้ายและขวา 75px
+            let paddingY = 65; // เผื่อระยะป้ายทางบนและล่าง 65px
+            let wAvail = width - (paddingX * 2);
+            let hAvail = height - (paddingY * 2) - 40; // หักหลบสเตตัสบาร์ 40px
+
+            // คำนวณขอบเขตสูงสุดในทฤษฎี (เมื่อขยายเป็น x5) เพื่อหาขนาดพิกเซลที่เหมาะสมที่สุด
+            let maxTheoreticalA = baseA * 5;
+            let maxTheoreticalB = baseB * 5;
+            
+            let totalSpanX = 0;
+            let totalSpanY = 0;
+
+            if (showSquares) {
+                // ขอบเขตความกว้างกว้างสุดเมื่อรวมสี่เหลี่ยมด้านซ้ายและเอียง = 2a + b
+                totalSpanX = (2 * maxTheoreticalA) + maxTheoreticalB;
+                // ขอบเขตความสูงสูงสุดเมื่อรวมสี่เหลี่ยมด้านล่างและเอียง = a + 2b
+                totalSpanY = maxTheoreticalA + (2 * maxTheoreticalB);
+            } else {
+                totalSpanX = maxTheoreticalB;
+                totalSpanY = maxTheoreticalA;
+            }
+
+            // กำหนดสเกลพิกเซลคงที่เพื่อให้สเกล x1 - x5 อยู่ในอัตราการโตที่ถูกต้องทางสายตา
+            unitPixel = min(wAvail / totalSpanX, hAvail / totalSpanY);
+
+            // พิกเซลของแต่ละด้านในปัจจุบัน (แบบอนิเมชัน)
+            let drawA_curr = baseA * currentMultiplier * unitPixel;
+            let drawB_curr = baseB * currentMultiplier * unitPixel;
+            let drawC_curr = drawC_calc(drawA_curr, drawB_curr);
+
+            // พิกเซลของร่างต้น (x1)
+            let drawA_x1 = baseA * 1 * unitPixel;
+            let drawB_x1 = baseB * 1 * unitPixel;
+            let drawC_x1 = drawC_calc(drawA_x1, drawB_x1);
+
+            // 2. [จุดสำคัญ] คำนวณจุดยอดมุมฉาก (cX, cY) แบบศูนย์กลางไดนามิก (Dynamic Centering)
+            // วิธีนี้จะช่วยปรับปรุงพิกัดมุมฉากให้เลื่อนขยับไปมาแบบนุ่มนวลเพื่อตรึงให้ "จุดกึ่งกลางของภาพรวม" อยู่ใจกลางแคนวาสเสมอ ไม่ว่าจะขยายใหญ่แค่ไหนก็ตาม!
+            let cX, cY;
+            let centerYTarget = (height - 40) / 2; // จุดกึ่งกลางแกนตั้งแคนวาส (หักสเตตัสบาร์)
+
+            if (showSquares) {
+                // สำหรับโหมดแสดงสี่เหลี่ยม: จุดศูนย์กลางของสี่เหลี่ยมประกอบทั้งหมดอยู่ที่:
+                // X_center = cX + drawB/2, Y_center = cY - drawA/2
+                // ดังนั้นเราแก้สมการเพื่อหา cX และ cY ที่ทำให้ภาพรวมอยู่กลางเป๊ะๆ
+                cX = (width / 2) - (drawB_curr / 2);
+                cY = centerYTarget + (drawA_curr / 2);
+            } else {
+                // สำหรับโหมดเฉพาะสามเหลี่ยม: จัดให้อยู่กึ่งกลางในลักษณะเดียวกัน
+                cX = (width / 2) - (drawB_curr / 2);
+                cY = centerYTarget + (drawA_curr / 2);
+            }
+
+            // ==========================================
+            // LAYER 1: วาดสีกริดอ้างอิง และ "ร่างต้น x1 (Ghost Silhouette)"
+            // ==========================================
+            
+            // วาดตารางกริดเป็นฉากหลังแบบบางเบาเพื่อให้รู้ว่านี่เป็นพื้นที่กราฟวิเคราะห์
+            stroke(226, 232, 240, 80);
+            strokeWeight(1);
+            for (let i = 0; i < width; i += 20) {
+                line(i, 0, i, height - 40);
+            }
+            for (let j = 0; j < height - 40; j += 20) {
+                line(0, j, width, j);
+            }
+
+            // วาดเงา "สี่เหลี่ยมและสามเหลี่ยมร่างต้น x1" สีเทาจางๆ เพื่อเปรียบเทียบขนาด
+            // โดยใช้จุดศูนย์กลาง (cX, cY) เดียวกัน เพื่อให้เห็นการพุ่งตัวขยายขนาดออกจากมุมฉากร่วมกันแบบมีสัดส่วนชัดเจน
+            if (targetMultiplier > 1) { 
+                push();
+                if (showSquares) {
+                    noFill();
+                    stroke(148, 163, 184, 50); // สีเทาจางมาก
+                    strokeWeight(1);
+                    rect(cX, cY, drawB_x1, drawB_x1); // สี่เหลี่ยม b ด้านล่างร่างต้น
+                    rect(cX - drawA_x1, cY - drawA_x1, drawA_x1, drawA_x1); // สี่เหลี่ยม a ด้านซ้ายร่างต้น
+                    
+                    // สี่เหลี่ยม c ด้านเอียงร่างต้น
+                    push();
+                    translate(cX, cY - drawA_x1);
+                    rotate(atan2(drawA_x1, drawB_x1));
+                    rect(0, -drawC_x1, drawC_x1, drawC_x1);
+                    pop();
+                }
+
+                // ตัวสามเหลี่ยมร่างต้นแบบมีเส้นประ
+                fill(226, 232, 240, 150);
+                stroke(148, 163, 184, 180);
+                strokeWeight(1.5);
+                drawingContext.setLineDash([4, 4]); // ทำเส้นประ
+                triangle(cX, cY, cX, cY - drawA_x1, cX + drawB_x1, cY);
+                drawingContext.setLineDash([]); // กลับไปเส้นตรงปกติ
+                
+                // เขียนคำว่า "ร่างต้น x1" เล็กๆ ตรงกลางสามเหลี่ยมสีเทา
+                noStroke();
+                fill(100, 116, 139);
+                textSize(10);
+                textAlign(CENTER, CENTER);
+                text("ร่างต้น x1", cX + (drawB_x1 / 3), cY - (drawA_x1 / 3));
+                pop();
+            }
+
+            // ==========================================
+            // LAYER 2: เอฟเฟกต์แปลงร่างขยายตัว (Aura Pulse)
+            // ==========================================
+            if (effectPulse > 0) {
+                push();
+                noFill();
+                stroke(59, 130, 246, effectPulse);
+                strokeWeight(map(effectPulse, 0, 255, 6, 1));
+                let pulseScale = map(effectPulse, 255, 0, 1.0, 1.25);
+                let pA = drawA_curr * pulseScale;
+                let pB = drawB_curr * pulseScale;
+                triangle(cX, cY, cX, cY - pA, cX + pB, cY);
+                pop();
+            }
+
+            // ==========================================
+            // LAYER 3: วาดสี่เหลี่ยมจัตุรัสร่างอวตารจริง ณ ปัจจุบัน
+            // ==========================================
+            if (showSquares) {
+                // --- ด้าน b (น้ำเงิน) ---
+                fill(59, 130, 246, 30);
+                stroke(37, 99, 235, 120);
+                strokeWeight(1.5);
+                rect(cX, cY, drawB_curr, drawB_curr);
+                
+                drawTextBadge(
+                    "พื้นที่ b² = " + (baseB * targetMultiplier * baseB * targetMultiplier), 
+                    cX + drawB_curr/2, 
+                    cY + drawB_curr/2, 
+                    color('#1d4ed8'), 
+                    color('#f0f9ff'), 
+                    color('#bfdbfe')
+                );
+
+                // --- ด้าน a (แดง) ---
+                fill(239, 68, 68, 30);
+                stroke(220, 38, 38, 120);
+                strokeWeight(1.5);
+                rect(cX - drawA_curr, cY - drawA_curr, drawA_curr, drawA_curr);
+                
+                drawTextBadge(
+                    "พื้นที่ a² = " + (baseA * targetMultiplier * baseA * targetMultiplier), 
+                    cX - drawA_curr/2, 
+                    cY - drawA_curr/2, 
+                    color('#b91c1c'), 
+                    color('#fff5f5'), 
+                    color('#fecaca')
+                );
+
+                // --- ด้าน c (ม่วง) ---
+                push();
+                translate(cX, cY - drawA_curr);
+                let angle = atan2(drawA_curr, drawB_curr);
+                rotate(angle);
+                
+                fill(139, 92, 246, 30);
+                stroke(124, 58, 237, 120);
+                strokeWeight(1.5);
+                rect(0, -drawC_curr, drawC_curr, drawC_curr);
+                
+                // แปะสติกเกอร์ให้อ่านง่ายแนวตั้งตรง
+                push();
+                translate(drawC_curr/2, -drawC_curr/2);
+                rotate(-angle);
+                drawTextBadge(
+                    "พื้นที่ c² = " + (baseC * targetMultiplier * baseC * targetMultiplier), 
+                    0, 
+                    0, 
+                    color('#6d28d9'), 
+                    color('#faf5ff'), 
+                    color('#ddd6fe')
+                );
+                pop();
+                pop();
+            }
+
+            // ==========================================
+            // LAYER 4: สามเหลี่ยมมุมฉากตัวหลัก (เติบโตตามอนิเมชัน)
+            // ==========================================
+            stroke(30, 41, 59);
+            strokeWeight(3.5);
+            fill(255, 255, 255, 230); // พื้นหลังขาวข้นป้องกันตัวอักษรรวมตัวกัน
+            triangle(cX, cY, cX, cY - drawA_curr, cX + drawB_curr, cY);
+
+            // วาดสัญลักษณ์มุมฉากคู่ตัว
+            stroke(71, 85, 105);
+            strokeWeight(2);
+            noFill();
+            let rectSize = Math.min(15, drawB_curr * 0.25, drawA_curr * 0.25);
+            rect(cX, cY - rectSize, rectSize, rectSize);
+
+            // ==========================================
+            // LAYER 5: ตัวเลขกำกับความยาวด้าน ณ ปัจจุบัน
+            // ==========================================
+            let dispA = baseA * targetMultiplier;
+            let dispB = baseB * targetMultiplier;
+            let dispC = baseC * targetMultiplier;
+
+            // ด้านตั้ง a (สีแดง) - ปรับตำแหน่งเยื้องไปทางซ้ายพอเหมาะ ไม่ทับขอบสี่เหลี่ยม
+            drawTextBadge(
+                "a = " + dispA, 
+                cX - 42, 
+                cY - (drawA_curr / 2), 
+                color('#b91c1c'), 
+                color('#fff5f5'), 
+                color('#fecaca')
+            );
+            
+            // ด้านนอน b (สีน้ำเงิน) - ปรับเยื้องด้านล่างพอเหมาะ
+            drawTextBadge(
+                "b = " + dispB, 
+                cX + (drawB_curr / 2), 
+                cY + 22, 
+                color('#1d4ed8'), 
+                color('#f0f9ff'), 
+                color('#bfdbfe')
+            );
+            
+            // ด้านเฉียง c (สีม่วง) - ปรับกึ่งกลางด้านเอียงด้านในมุมฉากเพื่อให้อยู่กึ่งกลางสายตา
+            let midX = (cX + (cX + drawB_curr)) / 2;
+            let midY = ((cY - drawA_curr) + cY) / 2;
+            drawTextBadge(
+                "c = " + dispC, 
+                midX + 28, 
+                midY - 24, 
+                color('#6d28d9'), 
+                color('#faf5ff'), 
+                color('#ddd6fe')
+            );
+
+            // วาดสเตตัสบาร์ล่างสุด
+            drawStatusBar(dispA, dispB, dispC);
+        }
+
+        // ฟังก์ชันเขียนสเตตัสบาร์ใต้จอ
+        function drawStatusBar(a, b, c) {
+            push();
+            fill(241, 245, 249);
+            noStroke();
+            rect(10, height - 36, width - 20, 30, 8);
+            
+            fill(71, 85, 105);
+            textSize(12);
+            textAlign(CENTER, CENTER);
+            text(`สเกลปัจจุบัน: a = ${a} | b = ${b} | c = ${c} (ร่างอวตารโตเป็น ${targetMultiplier} เท่าของสัดส่วนเริ่มต้น)`, width/2, height - 21);
+            pop();
+        }
+    </script>
+</body>
+</html>
